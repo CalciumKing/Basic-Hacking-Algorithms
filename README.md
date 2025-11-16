@@ -4,8 +4,6 @@ Welcome to **Basic Hacking Algorithms**, a collection of fundamental algorithms 
 
 > ⚠️ **Important:** This repository is for **ethical learning only**. Use these techniques responsibly and never on systems you do not have explicit permission to test.
 
----
-
 ## 🚀 What’s Inside?
 
 This repository includes simple implementations and examples of:
@@ -15,5 +13,3 @@ This repository includes simple implementations and examples of:
     - Brute Force
     - Hybrid
 - Enhanced implementations of the above attacks utilizing multithreading for improved performance and efficiency
-
----
