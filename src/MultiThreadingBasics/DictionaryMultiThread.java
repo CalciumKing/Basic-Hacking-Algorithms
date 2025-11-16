@@ -43,7 +43,7 @@ public class DictionaryMultiThread {
 	private static final AtomicBoolean found = new AtomicBoolean(false);
 	
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
-		final String password = "vjht008";
+		final String password = "mypassword";
 		final String[] words = ReadFile(); // Load wordlist
 		final ArrayList<Thread> threads = new ArrayList<>();
 		final AtomicReference<String> threadName = new AtomicReference<>(); // Track winning thread
@@ -54,29 +54,7 @@ public class DictionaryMultiThread {
 		
 		// Create one thread per chunk
 		for (int i = 0; i < numChunks; i++) {
-			final int chunkIdx = i;
-			final Thread thread = new Thread(() -> {
-				// Calculate this thread's assigned range
-				int start = chunkIdx * chunkSize;
-				int end = Math.min(start + chunkSize, words.length);
-				
-				// Search through assigned chunk
-				for (int j = start; j < end; j++) {
-					// Check for early termination before each word
-					if (found.get())
-						return;
-					
-					final String curr = words[j];
-					System.out.println(Thread.currentThread().getName() + " - " + curr);
-					
-					if (curr.equals(password)) {
-						// Only one thread can successfully claim the "found" status
-						if (found.compareAndSet(false, true))
-							threadName.set(Thread.currentThread().getName());
-						return; // This thread's work is done
-					}
-				}
-			});
+			final Thread thread = getThread(i, chunkSize, words, password, threadName);
 			
 			thread.start();
 			threads.add(thread);
@@ -91,6 +69,43 @@ public class DictionaryMultiThread {
 			System.out.println("Password not found");
 		else
 			System.out.println("Found " + password + " by " + threadName.get());
+	}
+	
+	/**
+	 * Creates and configures a worker thread for parallel dictionary attack processing.
+	 *
+	 * @param i          the chunk index (0-based) determining which section of the wordlist this thread processes
+	 * @param chunkSize  the number of words each thread should handle
+	 * @param words      the complete wordlist array containing all passwords to check
+	 * @param password   the target password to search for
+	 * @param threadName atomic reference to store the name of the thread that finds the password
+	 * @return a configured Thread ready to search its assigned wordlist chunk
+	 */
+	private static Thread getThread(int i, int chunkSize, String[] words, String password,
+	                                AtomicReference<String> threadName) {
+		final int chunkIdx = i;
+		return new Thread(() -> {
+			// Calculate this thread's assigned range
+			int start = chunkIdx * chunkSize;
+			int end = Math.min(start + chunkSize, words.length);
+			
+			// Search through assigned chunk
+			for (int j = start; j < end; j++) {
+				// Check for early termination before each word
+				if (found.get())
+					return;
+				
+				final String curr = words[j];
+				System.out.println(Thread.currentThread().getName() + " - " + curr);
+				
+				if (curr.equals(password)) {
+					// Only one thread can successfully claim the "found" status
+					if (found.compareAndSet(false, true))
+						threadName.set(Thread.currentThread().getName());
+					return; // This thread's work is done
+				}
+			}
+		});
 	}
 	
 	/**
