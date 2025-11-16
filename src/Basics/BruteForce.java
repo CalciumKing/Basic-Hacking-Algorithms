@@ -1,7 +1,7 @@
 package Basics;
 
 public class BruteForce {
-	private static final String password = "pee";
+	private static final String password = "pass";
 	
 	public static void main(String[] args) {
 		// vvv if password length is already known vvv
@@ -18,7 +18,7 @@ public class BruteForce {
 		*/
 		
 		// vvv if not vvv
-		for (int i = 0; i <= 8; i++)
+		for (int i = 1; i <= 8; i++)
 			if (RecursiveBruteForce(new char[i], 0, i))
 				return;
 		// ^^^
@@ -49,10 +49,12 @@ public class BruteForce {
 			return false;
 		}
 		
-		for (final char c : ("abcdefghijklmnopqrstuvwxyz" +
-				"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-				"0123456789" +
-				"~`!@#$%^&*()_+-={}|[]\\ \";'<>?,./").toCharArray()) {
+		final String lower = "abcdefghijklmnopqrstuvwxyz",
+				upper = lower.toUpperCase(),
+				numbers = "0123456789",
+				symbols = "~`!@#$%^&*()_+-={}|[]\\ \";'<>?,./";
+		
+		for (final char c : (lower + upper + numbers + symbols).toCharArray()) {
 			passwordGuess[position] = c;
 			if (RecursiveBruteForce(passwordGuess, position + 1, length))
 				return true;

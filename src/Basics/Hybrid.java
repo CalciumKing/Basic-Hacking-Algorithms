@@ -1,18 +1,19 @@
 package Basics;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class Hybrid {
 	private static final String password = "wordpass99";
 	
 	public static void main(String[] args) {
-		for (final String word : new String[] { "password", "wordpass" }) {
+		String[] possibleKeywords = { "password", "wordpass" };
+		
+		for (final String word : possibleKeywords) {
 			System.out.println(word);
 			if (word.equals(password)) {
 				System.out.println("Password: " + word);
 				return;
 			}
 			
-			int maxComboLength = password.length() - word.length();
+			final int maxComboLength = password.length() - word.length();
 			if (HybridAttack(word, new char[maxComboLength], 0, maxComboLength))
 				return;
 			
