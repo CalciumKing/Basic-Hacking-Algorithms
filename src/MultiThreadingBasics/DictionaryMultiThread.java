@@ -4,32 +4,36 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DictionaryMultiThread {
-	private static volatile boolean found;
+	private static final AtomicBoolean found = new AtomicBoolean(false);
 	
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
-		final String password = "mypassword";
-		final ArrayList<String> words = ReadFile();
+		final String password = "vjht008";
+		final String[] words = ReadFile();
 		final ArrayList<Thread> threads = new ArrayList<>();
-		final Object lock = new Object();
+		final AtomicReference<String> threadName = new AtomicReference<>();
 		
-		for (int i = 0; i < words.size(); i += 100) {
-			final int finalI = i;
+		final int chunkSize = 100,
+				numChunks = (int) Math.ceil((double) words.length / chunkSize);
+		for (int i = 0; i < numChunks; i++) {
+			final int chunkIdx = i;
 			final Thread thread = new Thread(() -> {
-				for (int j = finalI; j < Math.min(finalI + 100, words.size()); j++) {
-					if (found) return;
+				int start = chunkIdx * chunkSize;
+				int end = Math.min(start + chunkSize, words.length);
+				
+				for (int j = start; j < end; j++) {
+					if (found.get())
+						return;
 					
-					final String curr = words.get(j);
+					final String curr = words[j];
 					System.out.println(Thread.currentThread().getName() + " - " + curr);
 					
 					if (curr.equals(password)) {
-						synchronized (lock) {
-							if (!found) {
-								found = true;
-								System.out.println("Found " + curr + " by " + Thread.currentThread().getName());
-							}
-						}
+						if (found.compareAndSet(false, true))
+							threadName.set(Thread.currentThread().getName());
 						return;
 					}
 				}
@@ -42,14 +46,16 @@ public class DictionaryMultiThread {
 		for (final Thread t : threads)
 			t.join();
 		
-		if (!found)
+		if (!found.get())
 			System.out.println("Password not found");
+		else
+			System.out.println("Found " + password + " by " + threadName.get());
 	}
 	
-	private static ArrayList<String> ReadFile() throws FileNotFoundException {
-		final File file = new File("src/WordLists/top_passwords.txt");
+	private static String[] ReadFile() throws FileNotFoundException {
+		final File file = new File("./src/WordLists/top_passwords.txt");
 		if (!file.exists())
-			System.exit(1);
+			throw new FileNotFoundException("Wordlist not found.");
 		
 		final Scanner scanner = new Scanner(file);
 		final ArrayList<String> passwords = new ArrayList<>();
@@ -57,8 +63,9 @@ public class DictionaryMultiThread {
 		System.out.println("Adding passwords...");
 		while (scanner.hasNextLine())
 			passwords.add(scanner.nextLine());
+		scanner.close();
 		
-		System.out.println("Finished adding passwords");
-		return passwords;
+		System.out.println("Finished adding " + passwords.size() + " passwords");
+		return passwords.toArray(new String[0]);
 	}
 }

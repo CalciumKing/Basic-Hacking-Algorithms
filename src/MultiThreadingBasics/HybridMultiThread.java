@@ -1,17 +1,19 @@
 package MultiThreadingBasics;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class HybridMultiThread {
-	private static volatile boolean found;
+	private static final AtomicBoolean found = new AtomicBoolean(false);
+	private static final AtomicReference<String> threadName = new AtomicReference<>();
 	private static final String password = "wordpass99";
-	private static final Object lock = new Object();
 	
 	public static void main(String[] args) throws InterruptedException {
 		final ArrayList<Thread> threads = new ArrayList<>();
 		
-		for (final String word : new String[] { "password", "wordpass" }) {
+		String[] possibleKeywords = { "password", "wordpass" };
+		for (final String word : possibleKeywords) {
 			final int maxComboLength = password.length() - word.length();
 			final Thread thread = new Thread(() -> HybridAttack(word, new char[maxComboLength], 0, maxComboLength));
 			
@@ -22,25 +24,24 @@ public class HybridMultiThread {
 		for (final Thread t : threads)
 			t.join();
 		
-		if (!found)
+		if (!found.get())
 			System.out.println("No password found");
+		else
+			System.out.println("Found " + password + " by " + threadName.get());
 	}
 	
 	private static boolean HybridAttack(final String baseWord, final char[] append,
 	                                    final int position, final int length) {
-		if (found) return false;
+		if (found.get())
+			return false;
 		
 		if (position == length) {
 			final String passwordAttempt = baseWord + new String(append);
 			System.out.println(Thread.currentThread().getName() + ": " + passwordAttempt);
 			
 			if (passwordAttempt.equals(password)) {
-				synchronized (lock) {
-					if (!found) {
-						found = true;
-						System.out.println("Found " + passwordAttempt + " by " + Thread.currentThread().getName());
-					}
-				}
+				if (found.compareAndSet(false, true))
+					threadName.set(Thread.currentThread().getName());
 				return true;
 			}
 			
